@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+
+<header class="page-head">
+  <p class="eyebrow">Category</p>
+  <h1 class="page-title"><%= label %></h1>
+  <p class="page-sub"><%= list.length %> review<%= list.length === 1 ? '' : 's' %> on the shelf</p>
+</header>
+
+<% if (list.length === 0) { %>
+  <div class="empty-state">
+    <p class="empty-glyph" aria-hidden="true">✦</p>
+    <p>Nothing haunts this shelf yet.</p>
+    <p><a class="text-link" href="/post">Write the first review →</a></p>
+  </div>
+<% } else { %>
+  <div class="grid">
+    <% list.forEach((review, i) => { %>
+      <%- include('partials/card', { review, i }) %>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

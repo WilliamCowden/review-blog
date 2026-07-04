@@ -1,0 +1,38 @@
+<%- include('partials/header') %>
+
+<article class="review">
+  <header class="review-head">
+    <p class="meta">
+      <a class="tag" href="/category/<%= review.category %>"><%= categories[review.category] %></a>
+      <span class="date"><%= formatDate(review.date) %></span>
+    </p>
+    <h1 class="review-title"><%= review.title %></h1>
+    <p class="review-rating">
+      <%- include('partials/stars', { rating: review.rating, size: 'lg' }) %>
+      <span class="rating-number"><%= review.rating %> / 5</span>
+    </p>
+  </header>
+
+  <% if (review.image) { %>
+    <div class="review-banner">
+      <img src="<%= review.image %>" alt="">
+    </div>
+  <% } else { %>
+    <div class="review-banner ghost">
+      <span aria-hidden="true"><%= review.title.trim()[0] %></span>
+    </div>
+  <% } %>
+
+  <%# The body is stored as plain text; blank lines separate
+      paragraphs. Splitting here keeps the data simple and the
+      output properly escaped (no raw HTML from user input). %>
+  <div class="review-body">
+    <% review.body.split(/\n\s*\n/).forEach((para) => { %>
+      <p><%= para %></p>
+    <% }) %>
+  </div>
+
+  <p class="review-back"><a class="text-link" href="/">← All reviews</a></p>
+</article>
+
+<%- include('partials/footer') %>

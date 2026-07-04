@@ -1,0 +1,814 @@
+/* =================================================================
+   GRAVE REVIEWS — dark folklore theme
+   =================================================================
+   Structure of this file:
+     1. Design tokens (change the whole look here)
+     2. Base & reset
+     3. Masthead
+     4. Nav banner
+     5. Layout helpers (container, page/section headings)
+     6. Ghost letter (the signature element)
+     7. Hero (featured review)
+     8. Card grid
+     9. Star ratings
+    10. Single review page
+    11. Post form
+    12. Empty state & 404
+    13. Footer
+    14. Motion
+    15. Responsive
+   ================================================================= */
+
+/* ---- 1. Design tokens ------------------------------------------
+   WHY custom properties: every color and font below is defined
+   once. Want an ember-orange theme later? Change --blood and
+   --blood-bright and the whole site follows. */
+:root {
+  color-scheme: dark; /* native controls (selects, scrollbars) render dark */
+
+  /* Palette */
+  --ink: #0b0910;          /* page background — cold, violet-tinged black */
+  --panel: #151021;        /* card & surface background */
+  --edge: #261d33;         /* hairline borders */
+  --bone: #ece5d8;         /* primary text — old parchment, not pure white */
+  --bone-soft: #d9d1c3;    /* long-form reading text */
+  --ash: #a89aae;          /* muted text */
+  --blood: #b1202f;        /* the accent — dried blood red */
+  --blood-bright: #e03748; /* hover / active / glow red */
+  --star-track: #3a3050;   /* unfilled stars */
+
+  /* Type */
+  --font-display: 'IM Fell English', 'Iowan Old Style', Palatino, Georgia, serif;
+  --font-masthead: 'IM Fell English SC', 'Iowan Old Style', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---- 2. Base & reset -------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  color: var(--bone);
+  background-color: var(--ink);
+  /* A faint blood-red aurora behind the masthead, and a soft
+     vignette at the bottom. Pure atmosphere, very low opacity. */
+  background-image:
+    radial-gradient(900px 420px at 50% -120px, rgba(177, 32, 47, 0.14), transparent 65%),
+    radial-gradient(1200px 600px at 50% 115%, rgba(0, 0, 0, 0.55), transparent 60%);
+  background-repeat: no-repeat;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+h1, h2, h3 {
+  font-weight: 400; /* IM Fell has no bold; prevent ugly faux-bolding */
+}
+
+::selection {
+  background: var(--blood);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--blood-bright);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---- 3. Masthead ------------------------------------------------- */
+.masthead {
+  text-align: center;
+  padding: 2.6rem 1rem 1.5rem;
+}
+
+.masthead-title {
+  font-family: var(--font-masthead);
+  font-size: clamp(2.1rem, 6vw, 3.2rem);
+  color: var(--bone);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  line-height: 1;
+}
+
+.masthead-title .ornament {
+  color: var(--blood-bright);
+  font-size: 0.42em;
+  transform: translateY(-0.15em);
+  transition: text-shadow 0.3s ease;
+}
+
+.masthead-title:hover .ornament {
+  text-shadow: 0 0 12px rgba(224, 55, 72, 0.8);
+}
+
+.masthead-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ash);
+  font-size: 1.05rem;
+  margin: 0.45rem 0 0;
+}
+
+/* ---- 4. Nav banner ------------------------------------------------
+   Sticky strip below the masthead. The thin red top border is the
+   Bloody Disgusting nod. Scrolls horizontally on narrow screens
+   instead of collapsing into a hamburger — simpler, no JS. */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(11, 9, 16, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(177, 32, 47, 0.55);
+  border-bottom: 1px solid var(--edge);
+}
+
+.nav-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  display: flex;
+  gap: 1.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-inner a {
+  position: relative;
+  display: block;
+  padding: 0.85rem 0;
+  color: var(--ash);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.nav-inner a:hover {
+  color: var(--bone);
+}
+
+.nav-inner a.active {
+  color: var(--bone);
+}
+
+.nav-inner a.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--blood-bright);
+}
+
+/* "Post" is an action, not a category — push it to the far edge
+   and give it the accent so it reads as the site's one button. */
+.nav-inner .nav-post {
+  margin-left: auto;
+  color: var(--blood-bright);
+}
+
+.nav-inner .nav-post:hover {
+  color: #ff6b79;
+}
+
+/* ---- 5. Layout helpers ------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  flex: 1; /* pushes the footer down on short pages (e.g. 404) */
+}
+
+.page-head {
+  margin: 2.5rem 0 2rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  color: var(--blood-bright);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.7rem);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.page-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ash);
+  margin: 0.5rem 0 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+}
+
+.section-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--bone);
+}
+
+.section-title span {
+  color: var(--blood-bright);
+  margin-right: 0.45rem;
+}
+
+.section-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--edge), transparent);
+}
+
+/* ---- 6. Ghost letter ----------------------------------------------
+   THE SIGNATURE. Reviews without a cover image get a huge, faint
+   illuminated initial of their title — like a drop cap from an old
+   grimoire, lit from behind in red. Parents control the size of
+   the letter; this class handles the fog and the glow. */
+.ghost {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(120% 130% at 30% 15%, #1f1633 0%, #130e20 55%, #0d0916 100%);
+}
+
+.ghost span {
+  font-family: var(--font-display);
+  line-height: 1;
+  color: rgba(236, 229, 216, 0.07);
+  text-shadow:
+    0 0 30px rgba(224, 55, 72, 0.22),
+    0 0 70px rgba(224, 55, 72, 0.1);
+  user-select: none;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* ---- 7. Hero (featured review) ------------------------------------ */
+.hero {
+  margin: 2.25rem 0 3.25rem;
+}
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: 2.25rem;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hero-media {
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  background: #0d0916;
+}
+
+.hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-ghost span {
+  font-size: clamp(7rem, 16vw, 12rem);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.6vw, 2.9rem);
+  line-height: 1.12;
+  margin: 0.55rem 0 0.75rem;
+  transition: color 0.2s ease;
+}
+
+.hero-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+}
+
+.hero-excerpt {
+  color: var(--ash);
+  font-size: 1.08rem;
+  line-height: 1.65;
+  max-width: 46ch;
+  margin: 0 0 1.4rem;
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--blood-bright);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.hero-cta span {
+  transition: transform 0.25s ease;
+}
+
+.hero-inner:hover .hero-cta span {
+  transform: translateX(4px);
+}
+
+.hero-inner:hover .hero-title {
+  color: #fdf8ec;
+}
+
+.hero-inner:hover .ghost span {
+  color: rgba(236, 229, 216, 0.12);
+  text-shadow:
+    0 0 34px rgba(224, 55, 72, 0.38),
+    0 0 90px rgba(224, 55, 72, 0.16);
+}
+
+/* ---- 8. Card grid -------------------------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1.6rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(224, 55, 72, 0.45);
+  box-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.9);
+}
+
+.card:hover .ghost span {
+  color: rgba(236, 229, 216, 0.12);
+  text-shadow:
+    0 0 34px rgba(224, 55, 72, 0.38),
+    0 0 80px rgba(224, 55, 72, 0.16);
+}
+
+.card-link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.thumb {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-bottom: 1px solid var(--edge);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb.ghost span {
+  font-size: 6.2rem;
+}
+
+.card-body {
+  padding: 1.15rem 1.25rem 1.4rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 0.7rem;
+}
+
+.tag {
+  background: var(--blood);
+  color: #fbeeee;
+  text-decoration: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.24em 0.6em 0.2em;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+a.tag:hover {
+  background: var(--blood-bright);
+}
+
+.date {
+  color: var(--ash);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 1.42rem;
+  line-height: 1.2;
+  margin: 0 0 0.55rem;
+}
+
+.excerpt {
+  color: var(--ash);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0.65rem 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- 9. Star ratings -----------------------------------------------
+   Two stacked rows of ★★★★★. The red row is clipped to a width
+   matching the rating, so 3.5/5 shows three and a half red stars.
+   No JavaScript, no icon fonts, screen-reader friendly. */
+.stars {
+  position: relative;
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 2px;
+}
+
+.stars-track {
+  color: var(--star-track);
+}
+
+.stars-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--blood-bright);
+  text-shadow: 0 0 10px rgba(224, 55, 72, 0.45);
+}
+
+.stars--lg {
+  font-size: 1.35rem;
+  letter-spacing: 3px;
+}
+
+.rating-number {
+  color: var(--ash);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+/* ---- 10. Single review page ---------------------------------------- */
+.review {
+  max-width: 720px;
+  margin: 2.5rem auto 0;
+}
+
+.review-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 5vw, 3rem);
+  line-height: 1.12;
+  margin: 0.5rem 0 0.85rem;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 1.8rem;
+}
+
+.review-banner {
+  aspect-ratio: 21 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  margin: 0 0 2.1rem;
+}
+
+.review-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.review-banner.ghost span {
+  font-size: clamp(5rem, 12vw, 8rem);
+}
+
+.review-body p {
+  color: var(--bone-soft);
+  font-size: 1.09rem;
+  line-height: 1.78;
+  margin: 0 0 1.25em;
+}
+
+/* Grimoire drop cap on the opening paragraph — echoes the ghost
+   letters, ties the whole identity together. */
+.review-body > p:first-of-type::first-letter {
+  font-family: var(--font-display);
+  float: left;
+  font-size: 3.6em;
+  line-height: 0.78;
+  padding: 0.06em 0.12em 0 0;
+  color: var(--blood-bright);
+}
+
+.review-back {
+  margin: 2.4rem 0 0;
+}
+
+.text-link {
+  color: var(--blood-bright);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(224, 55, 72, 0.35);
+  padding-bottom: 1px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.text-link:hover {
+  color: #ff6b79;
+  border-bottom-color: currentColor;
+}
+
+/* ---- 11. Post form -------------------------------------------------- */
+.post-form {
+  max-width: 640px;
+  margin: 0 0 2rem;
+}
+
+.field {
+  margin-bottom: 1.35rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+}
+
+.post-form label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--bone);
+  margin-bottom: 0.45rem;
+}
+
+.label-hint {
+  color: var(--ash);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.78rem;
+}
+
+.post-form input,
+.post-form select,
+.post-form textarea {
+  width: 100%;
+  background: #110c1c;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  padding: 0.72em 0.85em;
+  color: var(--bone);
+  font: inherit;
+  font-size: 0.98rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-form ::placeholder {
+  color: #6f6580;
+}
+
+.post-form input:focus,
+.post-form select:focus,
+.post-form textarea:focus {
+  outline: none;
+  border-color: var(--blood-bright);
+  box-shadow: 0 0 0 3px rgba(224, 55, 72, 0.15);
+}
+
+.post-form textarea {
+  resize: vertical;
+}
+
+.btn {
+  display: inline-block;
+  background: var(--blood);
+  color: #fdf3f0;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.8em 1.7em;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--blood-bright);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.form-note {
+  color: var(--ash);
+  font-size: 0.84rem;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+/* ---- 12. Empty state & 404 ------------------------------------------ */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--ash);
+}
+
+.empty-glyph {
+  color: var(--blood-bright);
+  font-size: 1.4rem;
+  margin: 0 0 0.8rem;
+}
+
+.not-found {
+  text-align: center;
+  padding: 4rem 1rem 3rem;
+}
+
+.not-found-code {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 16vw, 9rem);
+  line-height: 1;
+  margin: 0;
+  color: rgba(236, 229, 216, 0.08);
+  text-shadow:
+    0 0 40px rgba(224, 55, 72, 0.25),
+    0 0 90px rgba(224, 55, 72, 0.12);
+  user-select: none;
+}
+
+.not-found-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  margin: 0.3rem 0 0.5rem;
+}
+
+/* ---- 13. Footer ------------------------------------------------------ */
+.site-footer {
+  margin-top: 4.5rem;
+  border-top: 1px solid var(--edge);
+  padding: 2.4rem 1.25rem 3rem;
+  text-align: center;
+}
+
+.footer-ornament {
+  color: var(--blood);
+  font-size: 0.8rem;
+  margin: 0 0 1.2rem;
+}
+
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.4rem;
+  margin-bottom: 1.2rem;
+}
+
+.footer-nav a {
+  color: var(--ash);
+  text-decoration: none;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  transition: color 0.2s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--bone);
+}
+
+.footer-copy {
+  color: #7d7386;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+/* ---- 14. Motion ------------------------------------------------------
+   One orchestrated moment: hero and cards rise into place on load,
+   cards staggered by their index (--d set inline by the template). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-inner {
+  animation: rise 0.6s ease both;
+}
+
+.card {
+  animation: rise 0.55s ease both;
+  animation-delay: calc(var(--d, 0) * 70ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---- 15. Responsive -------------------------------------------------- */
+@media (max-width: 860px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+  }
+
+  .hero-media {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 560px) {
+  .masthead {
+    padding: 2rem 1rem 1.1rem;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .thumb.ghost span {
+    font-size: 5.4rem;
+  }
+}

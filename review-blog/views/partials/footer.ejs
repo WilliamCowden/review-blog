@@ -1,0 +1,16 @@
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-ornament" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</p>
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="/">Latest</a>
+      <% Object.entries(categories).forEach(([slug, label]) => { %>
+        <a href="/category/<%= slug %>"><%= label %></a>
+      <% }) %>
+      <a href="/post">Post</a>
+    </nav>
+    <p class="footer-copy">© <%= new Date().getFullYear() %> <%= siteName %>. Spoilers may lurk below the fold.</p>
+  </footer>
+
+</body>
+</html>

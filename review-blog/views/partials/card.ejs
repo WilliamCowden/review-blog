@@ -1,0 +1,27 @@
+<%# One review card for the grid.
+    Expects: review (object), i (index, used to stagger the
+    entrance animation via the --d custom property).
+    If the review has no image, we render the "ghost letter" —
+    a giant, faint illuminated initial of the title. %>
+<article class="card" style="--d: <%= typeof i !== 'undefined' ? i : 0 %>">
+  <a class="card-link" href="/review/<%= review.id %>">
+    <% if (review.image) { %>
+      <div class="thumb">
+        <img src="<%= review.image %>" alt="" loading="lazy">
+      </div>
+    <% } else { %>
+      <div class="thumb ghost">
+        <span aria-hidden="true"><%= review.title.trim()[0] %></span>
+      </div>
+    <% } %>
+    <div class="card-body">
+      <p class="meta">
+        <span class="tag"><%= categories[review.category] %></span>
+        <span class="date"><%= formatDate(review.date) %></span>
+      </p>
+      <h3 class="card-title"><%= review.title %></h3>
+      <%- include('stars', { rating: review.rating }) %>
+      <p class="excerpt"><%= review.excerpt %></p>
+    </div>
+  </a>
+</article>

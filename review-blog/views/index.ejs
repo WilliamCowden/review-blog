@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+
+<%# ---- Featured hero: the newest review, Bloody Disgusting style ---- %>
+<section class="hero" aria-label="Featured review">
+  <a class="hero-inner" href="/review/<%= featured.id %>">
+    <div class="hero-media">
+      <% if (featured.image) { %>
+        <img src="<%= featured.image %>" alt="">
+      <% } else { %>
+        <div class="ghost hero-ghost">
+          <span aria-hidden="true"><%= featured.title.trim()[0] %></span>
+        </div>
+      <% } %>
+    </div>
+    <div class="hero-copy">
+      <p class="meta">
+        <span class="tag"><%= categories[featured.category] %></span>
+        <span class="date"><%= formatDate(featured.date) %></span>
+      </p>
+      <h2 class="hero-title"><%= featured.title %></h2>
+      <p class="hero-rating">
+        <%- include('partials/stars', { rating: featured.rating, size: 'lg' }) %>
+        <span class="rating-number"><%= featured.rating %> / 5</span>
+      </p>
+      <p class="hero-excerpt"><%= featured.excerpt %></p>
+      <span class="hero-cta">Read the review <span aria-hidden="true">→</span></span>
+    </div>
+  </a>
+</section>
+
+<%# ---- Everything else, newest first ---- %>
+<section aria-label="Latest reviews">
+  <div class="section-head">
+    <h2 class="section-title"><span aria-hidden="true">✦</span> Latest Reviews</h2>
+    <span class="section-rule" aria-hidden="true"></span>
+  </div>
+
+  <div class="grid">
+    <% rest.forEach((review, i) => { %>
+      <%- include('partials/card', { review, i }) %>
+    <% }) %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <%# pageTitle is set per-route; null means "just the site name" %>
+  <title><%= pageTitle ? pageTitle + ' — ' + siteName : siteName %></title>
+
+  <%# Fonts: IM Fell English (old-print folklore face for titles),
+      IM Fell English SC (small caps, masthead only),
+      Alegreya Sans (readable humanist body face) %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <%# ---- Masthead: old-newspaper style, centered ---- %>
+  <header class="masthead">
+    <a class="masthead-title" href="/">
+      <span class="ornament" aria-hidden="true">✦</span>
+      <%= siteName %>
+      <span class="ornament" aria-hidden="true">✦</span>
+    </a>
+    <p class="masthead-tagline"><%= tagline %></p>
+  </header>
+
+  <%# ---- Nav banner: Latest, the four categories, Post ----
+      navActive is passed by each route so the current section
+      gets the blood-red underline. %>
+  <nav class="site-nav" aria-label="Main">
+    <div class="nav-inner">
+      <a href="/" class="<%= navActive === 'latest' ? 'active' : '' %>">Latest</a>
+      <% Object.entries(categories).forEach(([slug, label]) => { %>
+        <a href="/category/<%= slug %>" class="<%= navActive === slug ? 'active' : '' %>"><%= label %></a>
+      <% }) %>
+      <a href="/post" class="nav-post <%= navActive === 'post' ? 'active' : '' %>">Post</a>
+    </div>
+  </nav>
+
+  <main class="container">
