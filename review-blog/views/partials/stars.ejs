@@ -1,8 +1,9 @@
-<%# Star rating, 0–5 with half-stars.
+<%# Star rating, whole stars 1–5.
     HOW IT WORKS: two identical rows of five stars are stacked.
     The bottom row is dim; the top row is blood red and clipped
-    to a width matching the rating (e.g. 3.5 / 5 → 70%). This
-    handles halves (and any decimal) with zero JavaScript.
+    to a width matching the rating (e.g. 4 / 5 → 80%). No
+    JavaScript. The width trick works for ANY value 0–5, so this
+    partial needs no changes if half-stars ever return.
     "size" is optional: pass size: 'lg' for the hero/review page. %>
 <span class="stars <%= typeof size !== 'undefined' && size === 'lg' ? 'stars--lg' : '' %>"
       role="img" aria-label="Rated <%= rating %> out of 5 stars">

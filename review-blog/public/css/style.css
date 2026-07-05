@@ -17,6 +17,7 @@
     13. Footer
     14. Motion
     15. Responsive
+    16. Admin (plain by design)
    ================================================================= */
 
 /* ---- 1. Design tokens ------------------------------------------
@@ -184,14 +185,14 @@ h1, h2, h3 {
   background: var(--blood-bright);
 }
 
-/* "Post" is an action, not a category — push it to the far edge
+/* "Manage" is an action, not a category — push it to the far edge
    and give it the accent so it reads as the site's one button. */
-.nav-inner .nav-post {
+.nav-inner .nav-manage {
   margin-left: auto;
   color: var(--blood-bright);
 }
 
-.nav-inner .nav-post:hover {
+.nav-inner .nav-manage:hover {
   color: #ff6b79;
 }
 
@@ -473,7 +474,7 @@ a.tag:hover {
 
 /* ---- 9. Star ratings -----------------------------------------------
    Two stacked rows of ★★★★★. The red row is clipped to a width
-   matching the rating, so 3.5/5 shows three and a half red stars.
+   matching the rating, so 4/5 shows four red stars.
    No JavaScript, no icon fonts, screen-reader friendly. */
 .stars {
   position: relative;
@@ -676,6 +677,31 @@ a.tag:hover {
   margin-top: 1rem;
 }
 
+.form-note code {
+  font-style: normal;
+  font-size: 0.9em;
+  color: var(--bone);
+  background: #110c1c;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  padding: 0.08em 0.35em;
+}
+
+/* Shown above the form when a submit is rejected (missing fields,
+   duplicate title). role="alert" in the template announces it to
+   screen readers as well. */
+.form-error {
+  background: rgba(177, 32, 47, 0.12);
+  border: 1px solid rgba(224, 55, 72, 0.45);
+  border-left: 3px solid var(--blood-bright);
+  border-radius: 4px;
+  color: #f0c9cd;
+  padding: 0.85em 1em;
+  margin: 0 0 1.5rem;
+  max-width: 640px;
+  font-size: 0.95rem;
+}
+
 /* ---- 12. Empty state & 404 ------------------------------------------ */
 .empty-state {
   text-align: center;
@@ -811,4 +837,110 @@ a.tag:hover {
   .thumb.ghost span {
     font-size: 5.4rem;
   }
+}
+
+/* ---- 16. Admin --------------------------------------------------------
+   Deliberately plain. These pages are for the site's keeper, not
+   its visitors, so they borrow the existing tokens, form styles,
+   tags, and stars — only the list rows and two button variants
+   are new. Function first. */
+.admin-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+a.btn {
+  text-decoration: none;
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--edge);
+  color: var(--bone);
+}
+
+.btn--ghost:hover {
+  background: transparent;
+  border-color: var(--blood-bright);
+}
+
+.btn--danger {
+  background: transparent;
+  border: 1px solid rgba(224, 55, 72, 0.5);
+  color: var(--blood-bright);
+  padding: 0.5em 1.1em;
+}
+
+.btn--danger:hover {
+  background: var(--blood);
+  border-color: var(--blood);
+  color: #fdf3f0;
+}
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.3rem;
+  margin: 0 0 1.4rem;
+}
+
+.admin-filters a {
+  color: var(--ash);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 0.2rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.admin-filters a:hover {
+  color: var(--bone);
+}
+
+.admin-filters a.active {
+  color: var(--bone);
+  border-bottom-color: var(--blood-bright);
+}
+
+.admin-list {
+  list-style: none;
+  margin: 0 0 2rem;
+  padding: 0;
+  border-top: 1px solid var(--edge);
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0.2rem;
+  border-bottom: 1px solid var(--edge);
+  flex-wrap: wrap;
+}
+
+.admin-row .meta {
+  margin: 0 0 0.15rem;
+}
+
+.admin-row-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--bone);
+  text-decoration: none;
+  margin: 0.1rem 0 0.3rem;
+}
+
+.admin-row-title:hover {
+  color: var(--blood-bright);
+}
+
+.admin-delete {
+  margin: 0;
 }

@@ -36,7 +36,7 @@
       <% Object.entries(categories).forEach(([slug, label]) => { %>
         <a href="/category/<%= slug %>" class="<%= navActive === slug ? 'active' : '' %>"><%= label %></a>
       <% }) %>
-      <a href="/post" class="nav-post <%= navActive === 'post' ? 'active' : '' %>">Post</a>
+      <a href="/admin" class="nav-manage <%= navActive === 'manage' ? 'active' : '' %>">Manage</a>
     </div>
   </nav>
 

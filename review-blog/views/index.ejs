@@ -1,5 +1,6 @@
 <%- include('partials/header') %>
 
+<% if (featured) { %>
 <%# ---- Featured hero: the newest review, Bloody Disgusting style ---- %>
 <section class="hero" aria-label="Featured review">
   <a class="hero-inner" href="/review/<%= featured.id %>">
@@ -41,5 +42,12 @@
     <% }) %>
   </div>
 </section>
+<% } else { %>
+  <div class="empty-state">
+    <p class="empty-glyph" aria-hidden="true">✦</p>
+    <p>The ledger is empty.</p>
+    <p><a class="text-link" href="/post">Write the first review →</a></p>
+  </div>
+<% } %>
 
 <%- include('partials/footer') %>

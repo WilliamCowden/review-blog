@@ -4,37 +4,33 @@
 // Responsibilities:
 //   1. Serve static assets (the CSS) from /public
 //   2. Render EJS templates from /views with data
-//   3. Handle the /post form so new reviews appear immediately
+//   3. Handle the /post form: validate, insert, handle failures
+//
+// Notice what is NOT here anymore: SQL. All database work lives in
+// db.js; this file only calls listReviews / getReview / etc.
 // ---------------------------------------------------------------
 
 const express = require('express');
 const path = require('path');
-const { categories, reviews } = require('./data');
+const { categories } = require('./data');
+const { listReviews, listByCategory, getReview, createReview, deleteReview } = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 80;
 
 // --- View engine setup -----------------------------------------
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // --- Middleware -------------------------------------------------
-// Static files: anything in /public is served as-is, so
-// /public/css/style.css is reachable at /css/style.css.
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Parses <form> POST bodies into req.body (needed for /post).
 app.use(express.urlencoded({ extended: false }));
 
 // --- app.locals: values every template can see ------------------
-// WHY: things like the site name appear in header.ejs and
-// footer.ejs on every page. Putting them here means you change
-// them in exactly one place.
 app.locals.siteName = 'Grave Reviews'; // ← placeholder, rename me!
 app.locals.tagline = 'Books, film, TV & games — reviewed by lantern light.';
 app.locals.categories = categories;
 
-// Small date helper so templates never do date math themselves.
 app.locals.formatDate = (iso) =>
   new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -42,19 +38,16 @@ app.locals.formatDate = (iso) =>
     day: 'numeric',
   });
 
-// Newest first, everywhere.
-const byNewest = (a, b) => new Date(b.date) - new Date(a.date);
-
 // --- Routes ------------------------------------------------------
 
 // Home ("Latest"): featured hero = newest review, grid = the rest.
 app.get('/', (req, res) => {
-  const sorted = [...reviews].sort(byNewest);
+  const all = listReviews();
   res.render('index', {
-    pageTitle: null, // null → header falls back to just the site name
+    pageTitle: null,
     navActive: 'latest',
-    featured: sorted[0],
-    rest: sorted.slice(1),
+    featured: all[0] || null, // null only if the table is ever emptied
+    rest: all.slice(1),
   });
 });
 
@@ -64,18 +57,22 @@ app.get('/category/:slug', (req, res, next) => {
   const label = categories[slug];
   if (!label) return next(); // unknown slug → fall through to 404
 
-  const list = reviews.filter((r) => r.category === slug).sort(byNewest);
   res.render('category', {
     pageTitle: label,
     navActive: slug,
     label,
-    list,
+    list: listByCategory(slug),
   });
 });
 
 // Single review page.
 app.get('/review/:id', (req, res, next) => {
-  const review = reviews.find((r) => r.id === Number(req.params.id));
+  // Guard the cast: /review/banana → NaN, which isn't a valid id
+  // (and better-sqlite3 refuses to bind NaN at all).
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return next();
+
+  const review = getReview(id);
   if (!review) return next();
 
   res.render('review', {
@@ -85,40 +82,116 @@ app.get('/review/:id', (req, res, next) => {
   });
 });
 
-// The "Post" page: a form for writing a new review.
-app.get('/post', (req, res) => {
-  res.render('post', { pageTitle: 'Post a Review', navActive: 'post' });
+// --- Admin ---------------------------------------------------------
+// Both admin pages live under the /admin path prefix on purpose:
+// when this blog goes public, a login check can be added in exactly
+// ONE place — an app.use('/admin', requireLogin) middleware above
+// these routes — and every admin page is covered at once.
+//
+//   GET  /admin                     → write a new review (the form)
+//   POST /admin                     → create it
+//   GET  /admin/reviews             → list, filter, delete
+//   POST /admin/reviews/:id/delete  → delete one review
+//
+// WHY deletes use POST and not a GET link: browsers prefetch links,
+// and crawlers follow every GET they can find. A "GET /delete/5"
+// link would let a search bot quietly empty your database. Rule of
+// thumb: GET must never change data — anything destructive requires
+// a deliberate form submission.
+
+app.get('/admin', (req, res) => {
+  res.render('admin/new', {
+    pageTitle: 'Admin — New Review',
+    navActive: 'manage',
+    error: null,
+    values: {},
+  });
 });
 
-// Form submission. Validates lightly, builds a review object,
-// adds it to the front of the array, and redirects to the new page.
-app.post('/post', (req, res) => {
-  const { title, category, rating, excerpt, body, image } = req.body;
-
-  // Minimal guard: a review needs at least a title and a body.
-  if (!title || !title.trim() || !body || !body.trim()) {
-    return res.redirect('/post');
-  }
-
-  const nextId = reviews.reduce((max, r) => Math.max(max, r.id), 0) + 1;
-
-  const review = {
-    id: nextId,
-    title: title.trim(),
-    // Only accept known category slugs; default to movies otherwise.
-    category: categories[category] ? category : 'movies',
-    // Clamp rating into the 0–5 range no matter what was sent.
-    rating: Math.min(5, Math.max(0, parseFloat(rating) || 0)),
-    date: new Date().toISOString(),
-    excerpt:
-      (excerpt || '').trim() || body.trim().slice(0, 140).trim() + '…',
-    body: body.trim(),
-    image: (image || '').trim() || null,
+// Form submission.
+// The flow: clean the input → validate → insert → redirect.
+// If anything fails, re-render the form WITH the user's text intact —
+// nobody should lose a whole written review to a duplicate title.
+app.post('/admin', (req, res) => {
+  // 1. Clean: trim everything, round + clamp the rating into a
+  //    whole 1–5, whitelist the category. NOT NULL in the schema
+  //    can't catch an empty string (''), so the app checks that
+  //    itself. (Math.round(NaN) is NaN, which is falsy → || 1.)
+  const values = {
+    title: (req.body.title || '').trim(),
+    category: categories[req.body.category] ? req.body.category : 'movies',
+    rating: Math.min(5, Math.max(1, Math.round(Number(req.body.rating)) || 1)),
+    excerpt: (req.body.excerpt || '').trim(),
+    body: (req.body.body || '').trim(),
+    image: (req.body.image || '').trim(),
   };
 
-  reviews.unshift(review);
-  res.redirect('/review/' + review.id);
+  // 2. Validate.
+  if (!values.title || !values.body) {
+    return res.status(400).render('admin/new', {
+      pageTitle: 'Admin — New Review',
+      navActive: 'manage',
+      error: 'A review needs at least a title and a review body.',
+      values,
+    });
+  }
+
+  // 3. Insert — inside try/catch, because the UNIQUE constraint on
+  //    title makes the database THROW on duplicates. A constraint
+  //    violation is the database doing its job; catching it and
+  //    explaining it is ours.
+  try {
+    const id = createReview({
+      title: values.title,
+      category: values.category,
+      rating: values.rating,
+      excerpt: values.excerpt || values.body.slice(0, 140).trim() + '…',
+      review: values.body,
+      cover_image_url: values.image || null,
+    });
+    res.redirect('/review/' + id);
+  } catch (err) {
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(409).render('admin/new', {
+        pageTitle: 'Admin — New Review',
+        navActive: 'manage',
+        error: `A review titled “${values.title}” already exists. Titles must be unique.`,
+        values,
+      });
+    }
+    throw err; // anything unexpected → let Express's error handler show it
+  }
 });
+
+// The management list. ?cat=books filters to one shelf; anything
+// else (or no ?cat at all) shows everything, newest first. The slug
+// is checked against the categories map — never trust a query
+// string, even on an admin page.
+app.get('/admin/reviews', (req, res) => {
+  const cat = categories[req.query.cat] ? req.query.cat : null;
+  res.render('admin/manage', {
+    pageTitle: 'Admin — Manage Reviews',
+    navActive: 'manage',
+    activeCat: cat || 'latest',
+    list: cat ? listByCategory(cat) : listReviews(),
+  });
+});
+
+// Delete, then bounce back to the list — keeping whatever filter
+// was active, so cleaning up one shelf doesn't reset the view.
+app.post('/admin/reviews/:id/delete', (req, res, next) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return next();
+
+  deleteReview(id);
+
+  const cat = categories[req.query.cat] ? req.query.cat : null;
+  res.redirect('/admin/reviews' + (cat ? '?cat=' + cat : ''));
+});
+
+// The old /post URL lives on as a redirect — bookmarks and muscle
+// memory shouldn't break just because a page moved.
+app.get('/post', (req, res) => res.redirect('/admin'));
 
 // --- 404: anything that fell through the routes above ------------
 app.use((req, res) => {

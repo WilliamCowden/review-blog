@@ -1,0 +1,60 @@
+<%# Admin: list, filter, and delete reviews.
+    Each row shows the same information as the public cards (tag,
+    title, stars, date) but stripped down — this page is a tool.
+    The title links to the live review so you can double-check
+    before deleting. %>
+<%- include('../partials/header') %>
+
+<header class="page-head admin-head">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1 class="page-title">Manage Reviews</h1>
+    <p class="page-sub"><%= list.length %> review<%= list.length === 1 ? '' : 's' %> shown</p>
+  </div>
+  <a class="btn btn--ghost" href="/admin">← Write a new review</a>
+</header>
+
+<%# Same filters as the public nav: Latest = everything. Filtering
+    happens server-side via ?cat=, reusing the exact same db.js
+    functions the public category pages use. %>
+<nav class="admin-filters" aria-label="Filter reviews">
+  <a href="/admin/reviews" class="<%= activeCat === 'latest' ? 'active' : '' %>">Latest</a>
+  <% Object.entries(categories).forEach(([slug, label]) => { %>
+    <a href="/admin/reviews?cat=<%= slug %>" class="<%= activeCat === slug ? 'active' : '' %>"><%= label %></a>
+  <% }) %>
+</nav>
+
+<% if (list.length === 0) { %>
+  <div class="empty-state">
+    <p class="empty-glyph" aria-hidden="true">✦</p>
+    <p>Nothing on this shelf.</p>
+  </div>
+<% } else { %>
+  <ul class="admin-list">
+    <% list.forEach((r) => { %>
+      <li class="admin-row">
+        <div class="admin-row-main">
+          <p class="meta">
+            <span class="tag"><%= categories[r.category] %></span>
+            <span class="date"><%= formatDate(r.date) %></span>
+          </p>
+          <a class="admin-row-title" href="/review/<%= r.id %>"><%= r.title %></a>
+          <%- include('../partials/stars', { rating: r.rating }) %>
+        </div>
+
+        <%# Delete is a POST form, not a link — see the comment in
+            server.js. The ?cat= keeps the current filter after the
+            redirect. confirm() is the one line of JavaScript on the
+            whole site: a native yes/no dialog before anything
+            irreversible happens. %>
+        <form class="admin-delete" method="POST"
+              action="/admin/reviews/<%= r.id %>/delete<%= activeCat !== 'latest' ? '?cat=' + activeCat : '' %>"
+              onsubmit="return confirm('Delete this review? This cannot be undone.')">
+          <button type="submit" class="btn btn--danger">Delete</button>
+        </form>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
+
+<%- include('../partials/footer') %>
